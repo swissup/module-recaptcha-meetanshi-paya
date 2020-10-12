@@ -1,0 +1,21 @@
+{
+    "name": "swissup/module-recaptcha-meetanshi-paya",
+    "description": "Server side validation for Paya payments (Meetanshi)",
+    "keywords": [
+        "meetanshi paya",
+        "recaptcha",
+        "magento"
+    ],
+    "require": {
+        "swissup/module-recaptcha": "^1.3.11"
+    },
+    "type": "magento2-module",
+    "version": "1.0.0",
+    "license": "MIT",
+    "autoload": {
+        "files": [ "registration.php" ],
+        "psr-4": {
+            "Swissup\\RecaptchaMeetanshiPaya\\": ""
+        }
+    }
+}
