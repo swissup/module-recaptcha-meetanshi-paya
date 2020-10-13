@@ -40,7 +40,9 @@ class CheckoutRequestObserver implements ObserverInterface
         $captchaValue = $request->getParam('captcha');
         $captcha = $this->helper->getCaptcha($formId);
 
-        if (!$captcha->verify($captchaValue)->isSuccess()) {
+        if ($captcha->isRequired()
+            && !$captcha->verify($captchaValue)->isSuccess()
+        ) {
             $controllerAction = $observer->getControllerAction();
             $controllerAction->getActionFlag()->set(
                 '',
