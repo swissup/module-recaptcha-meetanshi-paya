@@ -3,37 +3,30 @@
 namespace Swissup\RecaptchaMeetanshiPaya\Observer;
 
 use Magento\Framework\App\RequestInterface;
+use Magento\Framework\Event\ObserverInterface;
 
-class CheckoutRequestObserver implements \Magento\Framework\Event\ObserverInterface
+class CheckoutRequestObserver implements ObserverInterface
 {
-    /**
-     * @var RequestInterface
-     */
-    private $request;
-
     /**
      * @var \Magento\Captcha\Helper\Data
      */
     private $helper;
 
     /**
-     * @var \Magento\Framework\Message\ManagerInterface
+     * @var \Swissup\Recaptcha\Helper\Data
      */
-    private $messageManager;
+    private $recaptchaHelper;
 
     /**
-     * @param RequestInterface                            $request
-     * @param \Magento\Captcha\Helper\Data                $helper
-     * @param \Magento\Framework\Message\ManagerInterface $messageManager
+     * @param \Magento\Captcha\Helper\Data   $helper
+     * @param \Swissup\Recaptcha\Helper\Data $recaptchaHelper
      */
     public function __construct(
-        RequestInterface $request,
         \Magento\Captcha\Helper\Data $helper,
-        \Magento\Framework\Message\ManagerInterface $messageManager
+        \Swissup\Recaptcha\Helper\Data $recaptchaHelper
     ) {
-        $this->request = $request;
         $this->helper = $helper;
-        $this->messageManager = $messageManager;
+        $this->recaptchaHelper = $recaptchaHelper;
     }
 
     /**
@@ -42,12 +35,24 @@ class CheckoutRequestObserver implements \Magento\Framework\Event\ObserverInterf
      */
     public function execute(\Magento\Framework\Event\Observer $observer)
     {
-        $formId = $this->request->getParam('form_id');
+        $formId = $this->recaptchaHelper->getCheckoutFormId();
+        $request = $observer->getRequest();
+        $captchaValue = $request->getParam('captcha');
         $captcha = $this->helper->getCaptcha($formId);
-        $gResponse = $this->request->getParam('recaptcha');
-        if (!$captcha->verify($gResponse)->isSuccess()) {
-            $this->messageManager->addErrorMessage(__('Incorrect reCAPTCHA.'));
-            $this->_actionFlag->set('', \Magento\Framework\App\Action\Action::FLAG_NO_DISPATCH, true);
+
+        if (!$captcha->verify($captchaValue)->isSuccess()) {
+            $controllerAction = $observer->getControllerAction();
+            $controllerAction->getActionFlag()->set(
+                '',
+                \Magento\Framework\App\Action\Action::FLAG_NO_DISPATCH,
+                true
+            );
+            $controllerAction->getResponse()->representJson(
+                json_encode([
+                    'error' => true,
+                    'message' => __('Incorrect reCAPTCHA.')
+                ])
+            );
         }
     }
 }
